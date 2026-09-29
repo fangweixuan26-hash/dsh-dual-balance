@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: smoke tests (node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['20', '22', '24']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      # The plugin ships prebuilt `lib/` and has no dependencies, so there is
+      # nothing to install — the suites boot the real artifacts.
+      - run: node tests/host-smoke.mjs
+      - run: node tests/client-smoke.mjs
+
+  syntax:
+    name: shipped artifacts parse
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      # `dsh plugin add github:...` installs the repo as-is with no build step,
+      # so a broken committed artifact is a broken release.
+      - run: node --check lib/index.js
+      - run: node --check lib/client.js
+      - run: node -e "JSON.parse(require('fs').readFileSync('package.json','utf8'))"

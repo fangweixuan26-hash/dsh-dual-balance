@@ -1,0 +1,8 @@
+# Bundle layer contributed by dsh-dual-balance.
+#
+# `dsh plugin add` (or the Plugins page) appends this package to the profile's
+# `dsh.profile.bundles`, which applies this patch on boot; the row id only has
+# to be unique within the composition.
+- insert:
+    - id: dual-balance
+      name: 'dsh-dual-balance'

@@ -1,0 +1,61 @@
+{
+  "name": "dsh-dual-balance",
+  "version": "0.1.0",
+  "description": "DSH status-bar plugin: show the signed-in DeepSeek account's Platform wallet next to the DEEPSEEK_API_KEY balance, as one pill in the composer stats band",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md",
+    "README.en.md",
+    "CHANGELOG.md"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek",
+    "deepseek-harness",
+    "cordis",
+    "balance",
+    "quota",
+    "account-balance",
+    "api-balance",
+    "status-bar",
+    "statusbar",
+    "web"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-slots"
+      ]
+    }
+  },
+  "engines": {
+    "node": ">=20",
+    "dsh": ">=0.1.5-rc.1"
+  },
+  "scripts": {
+    "test": "node tests/host-smoke.mjs && node tests/client-smoke.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fangweixuan26-hash/dsh-dual-balance.git"
+  },
+  "homepage": "https://github.com/fangweixuan26-hash/dsh-dual-balance#readme",
+  "bugs": {
+    "url": "https://github.com/fangweixuan26-hash/dsh-dual-balance/issues"
+  },
+  "author": "fangweixuan26-hash",
+  "license": "MIT"
+}

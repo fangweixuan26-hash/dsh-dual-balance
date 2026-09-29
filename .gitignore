@@ -1,0 +1,15 @@
+# Dependencies (this plugin ships zero runtime dependencies; the profile owns the tree)
+node_modules/
+
+# Plugin-manager diagnostics and the profile's install record
+.plugin-manager/
+
+# Local scratch: captured screenshots, extracted packages, probe scripts
+.research/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.log

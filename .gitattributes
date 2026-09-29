@@ -1,0 +1,13 @@
+# Normalize line endings: LF in the repository, whatever the platform checks out.
+* text=auto eol=lf
+
+# The shipped artifacts are installed verbatim by `dsh plugin add github:...`,
+# so they must never be re-encoded on checkout.
+lib/*.js text eol=lf
+cordis.patch.yml text eol=lf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.webp binary
+*.ico binary
