@@ -1,0 +1,58 @@
+name: Bug report
+description: Something in the pill, the dialog, or a reading is wrong
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Two things make a fix land much faster:
+        the **exact pill text** you see, and the **route payload** below.
+
+  - type: input
+    id: dsh-version
+    attributes:
+      label: DSH version and client
+      description: Run `dsh --version`, and say whether this is the Web or Desktop client.
+      placeholder: 0.2.0-rc.2, Desktop (Windows)
+    validations:
+      required: true
+
+  - type: input
+    id: plugin-version
+    attributes:
+      label: dsh-dual-balance version
+      placeholder: 0.1.0
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected, and what happened instead
+      description: If the pill text is wrong, quote it exactly (e.g. `账号 未登录` or `余额 ¥0.00`).
+    validations:
+      required: true
+
+  - type: textarea
+    id: payload
+    attributes:
+      label: Route payload
+      description: |
+        Paste the output of this command. It contains balances and error text
+        only — no keys, no tokens.
+      render: json
+      value: |
+        curl -s "http://127.0.0.1:19387/api/dsh-dual-balance/status?refresh=1"
+    validations:
+      required: false
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open a session with the composer visible
+        2. Click the balance pill
+        3. Move the pointer away like this…
+    validations:
+      required: false
