@@ -9,41 +9,80 @@
  */
 import assert from 'node:assert/strict'
 
-let handoff
-globalThis.window = {
-  __ModuleLoader__: {
-    load(value) { handoff = value },
-  },
+/**
+ * Pin the locale the bundle reads for its copy.
+ *
+ * Node 21+ exposes a real global `navigator`, so without this the suite takes
+ * its wording from whatever machine runs it: it passes on a zh-CN host and
+ * fails on an en-US one. Pinning is what makes the assertions mean something.
+ * @param language - BCP 47 tag the bundle will read.
+ */
+function pinLocale(language) {
+  Object.defineProperty(globalThis, 'navigator', {
+    value: { language },
+    configurable: true,
+    writable: true,
+  })
 }
 
-await import('../lib/client.js')
+/**
+ * Load the shipped bundle and hand back its registration envelope.
+ * @param specifier - module specifier; a query string busts the ESM cache so a
+ * second load re-reads the locale.
+ * @returns the `window.__ModuleLoader__.load` handoff.
+ */
+async function loadBundle(specifier) {
+  let handoff
+  globalThis.window = { __ModuleLoader__: { load(value) { handoff = value } } }
+  await import(specifier)
+  assert.notEqual(handoff, undefined, 'the bundle must register via __ModuleLoader__.load')
+  return handoff
+}
+
+/** Every specifier the factory is allowed to require, in order. */
+const EXPECTED_REQUIRES = ['react', 'react-dom', '@deepseek-ai/dsh-client-ui-primitives']
+
+/**
+ * Materialize a handoff's factory with stub platform modules.
+ * @param handoff - envelope from {@link loadBundle}.
+ * @param seen - array collecting the required specifiers.
+ * @returns the bundle's exported module object.
+ */
+function materialize(handoff, seen) {
+  return handoff.factory(spec => {
+    seen.push(spec)
+    if (spec === 'react') {
+      // The factory only destructures hooks and createElement; nothing renders.
+      return {
+        createElement: () => {},
+        useCallback: () => {},
+        useEffect: () => {},
+        useRef: () => {},
+        useState: () => {},
+      }
+    }
+    if (spec === 'react-dom') return { createPortal: () => {} }
+    if (spec === '@deepseek-ai/dsh-client-ui-primitives') {
+      // The dialog seat must come from the official primitives, not a local copy.
+      return { useAnchoredPosition: () => {}, useDismissOnOutsidePointer: () => {} }
+    }
+    throw new Error(`unexpected require: ${spec}`)
+  })
+}
+
+// ---- wiring (zh-CN) ------------------------------------------------------
+
+pinLocale('zh-CN')
+const handoff = await loadBundle('../lib/client.js')
 
 assert.equal(handoff.id, 'dsh-dual-balance')
 assert.equal(typeof handoff.factory, 'function')
 
 const seen = []
-const mod = handoff.factory(spec => {
-  seen.push(spec)
-  if (spec === 'react') {
-    // The factory only destructures hooks and createElement; nothing renders.
-    return {
-      createElement: () => {},
-      useCallback: () => {},
-      useEffect: () => {},
-      useRef: () => {},
-      useState: () => {},
-    }
-  }
-  if (spec === 'react-dom') return { createPortal: () => {} }
-  if (spec === '@deepseek-ai/dsh-client-ui-primitives') {
-    // The dialog seat must come from the official primitives, not a local copy.
-    return { useAnchoredPosition: () => {}, useDismissOnOutsidePointer: () => {} }
-  }
-  throw new Error(`unexpected require: ${spec}`)
-})
+const mod = materialize(handoff, seen)
 
 // Only frozen-table platform modules may be required.
-assert.deepEqual(seen, ['react', 'react-dom', '@deepseek-ai/dsh-client-ui-primitives'])
+assert.deepEqual(seen, EXPECTED_REQUIRES)
 assert.deepEqual(mod.inject, ['slots'])
 assert.equal(typeof mod.apply, 'function')
 
@@ -137,4 +176,18 @@ assert.equal(stale.failed, false, 'stale is not a failure face')
 // Staleness is a timing fact, not a different wallet: it still collapses.
 assert.notEqual(sameWalletView({ account, api: { ...apiReady('15.34'), stale: true } }), null)
 
-console.log('client-smoke: all assertions passed')
+// ---- the English dictionary, for a non-zh host ---------------------------
+
+pinLocale('en-US')
+const enSeen = []
+const en = materialize(await loadBundle('../lib/client.js?locale=en'), enSeen)
+assert.deepEqual(enSeen, EXPECTED_REQUIRES, 'the required specifiers must not depend on locale')
+assert.equal(en.__internals.project('account', { state: 'signed-out' }).text, 'signed out')
+assert.equal(en.__internals.project('api', { state: 'no-key' }).text, 'not configured')
+assert.equal(en.__internals.project('api', { state: 'error', message: 'HTTP 401' }).text, 'read failed')
+assert.deepEqual(
+  en.__internals.project('account', account).rows,
+  [['CNY', '¥13.78'], ['Bonus CNY', '¥1.57'], ['Total CNY', '¥15.35']],
+)
+
+console.log('client-smoke: all assertions passed (zh-CN and en-US)')

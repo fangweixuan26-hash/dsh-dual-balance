@@ -42,5 +42,9 @@ First release.
 - The wallet glyph was at first too flat (`12.5 x 7`) and then too small
   (`11 x 10`); it is now `12.3 x 11.2`, inside the 12.00–13.25 range of its
   official neighbours.
+- The client suite was locale-dependent: Node 21+ exposes a real global
+  `navigator`, so it read its copy from the host and passed on a zh-CN machine
+  while failing on en-US CI. It now pins the locale and covers both
+  dictionaries.
 
 [0.1.0]: https://github.com/fangweixuan26-hash/dsh-dual-balance/releases/tag/v0.1.0
